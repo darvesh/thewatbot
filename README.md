@@ -9,7 +9,8 @@
 
 ## Usage
 
-`export BOT_TOKEN=""`
-
-`deno run --allow-net --allow-env ./mode.ts`
+```
+export BOT_TOKEN=""
+deno run --allow-net --allow-env ./local.ts
+```
 
