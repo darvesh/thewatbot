@@ -58,27 +58,29 @@ export function createResults(
 	dictionaries: Dictionary[]
 ): InlineQueryResult[] {
 	return dictionaries.flatMap((dictionary, didx) => {
-		return dictionary.definitions.map((def, widx) => {
-			return {
-				type: "article",
-				id: `${word}${didx}${widx}`,
-				title: `${word} (${dictionary.partOfSpeech.toLowerCase()})`,
-				description: escape(def.definition),
-				cache_time: 2592000, //30_DAYS
-				input_message_content: {
-					message_text: format({
-						word,
-						definition: def.definition,
-						examples: def.examples?.length ? def.examples : [],
-						partOfSpeech: dictionary.partOfSpeech,
-					}),
-					parse_mode: "HTML",
-				},
-				reply_markup: new InlineKeyboard()
-					.row()
-					.switchInlineCurrent("Other definitions", word),
-			};
-		});
+		return dictionary.definitions
+			.filter((def) => Boolean(escape(def.definition).trim()))
+			.map((def, widx) => {
+				return {
+					type: "article",
+					id: `${word}${didx}${widx}`,
+					title: `${word} (${dictionary.partOfSpeech.toLowerCase()})`,
+					description: escape(def.definition),
+					cache_time: 2592000, //30_DAYS
+					input_message_content: {
+						message_text: format({
+							word,
+							definition: def.definition,
+							examples: def.examples?.length ? def.examples : [],
+							partOfSpeech: dictionary.partOfSpeech,
+						}),
+						parse_mode: "HTML",
+					},
+					reply_markup: new InlineKeyboard()
+						.row()
+						.switchInlineCurrent("Other definitions", word),
+				};
+			});
 	});
 }
 
