@@ -71,14 +71,13 @@ export function createResults(
 					id: `${word}${didx}${widx}`,
 					title: `${word} (${dictionary.partOfSpeech.toLowerCase()})`,
 					description: escape(def.definition),
-					cache_time: 2592000, //30_DAYS
 					input_message_content: {
 						message_text: format({
 							word,
 							definition: def.definition,
-							examples: def.examples?.length ? def.examples : [],
+							examples: def.examples?.length ? def.examples.slice(0, 10) : [],
 							partOfSpeech: dictionary.partOfSpeech,
-						}),
+						}).slice(0, 4096),
 						parse_mode: "HTML",
 					},
 					reply_markup: new InlineKeyboard()
@@ -101,14 +100,14 @@ function emptyResult(word = ""): InlineQueryResult[] {
 			},
 			reply_markup: new InlineKeyboard()
 				.row()
-				.switchInlineCurrent("Try another word", word),
+				.switchInlineCurrent("Try another word", word.slice(0, -1)),
 		},
 	];
 }
 
 export async function pipeline(word: string) {
-	if (word == "") return emptyResult();
+	if (typeof word !== "string" || word.trim() == "") return emptyResult();
 	const dictionaries = await api(word);
 	if (!dictionaries.length) return emptyResult(word);
-	return createResults(word, dictionaries.slice(0, 50));
+	return createResults(word, dictionaries);
 }
