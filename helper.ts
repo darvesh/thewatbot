@@ -17,6 +17,7 @@ export const API_URL = "https://en.wiktionary.org/api/rest_v1/page/definition";
 function escape(text: string) {
 	return text
 		.replace(/<[^>]*>/g, "")
+		.replaceAll("&nbsp;", "")
 		.split(".\n ")
 		.map((str) => str.trim())
 		.join(".\n");
