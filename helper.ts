@@ -64,6 +64,7 @@ export function createResults(
 				id: `${word}${didx}${widx}`,
 				title: `${word} (${dictionary.partOfSpeech.toLowerCase()})`,
 				description: escape(def.definition),
+				cache_time: 2592000, //30_DAYS
 				input_message_content: {
 					message_text: format({
 						word,
