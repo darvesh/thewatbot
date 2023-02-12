@@ -44,9 +44,9 @@ function format({
 		"\n\n" +
 		`${
 			examples.length
-				? `Examples: \n ${examples
+				? `Examples: \n${examples
 						.slice(0, 10)
-						.map((eg) => `<i>${escape(eg.trim())}</i>`)
+						.map((eg) => `- <i>${escape(eg.trim())}</i>`)
 						.join("\n")}`
 				: ""
 		}`
