@@ -15,7 +15,11 @@ interface Definition {
 export const API_URL = "https://en.wiktionary.org/api/rest_v1/page/definition";
 
 function escape(text: string) {
-	return text.replace(/<[^>]*>/g, "").trim();
+	return text
+		.replace(/<[^>]*>/g, "")
+		.split(".\n ")
+		.map((str) => str.trim())
+		.join(".\n");
 }
 
 async function api(word: string, language: "en" = "en") {
