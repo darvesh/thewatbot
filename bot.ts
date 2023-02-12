@@ -27,6 +27,4 @@ bot.inlineQuery(/^[\w\s'-]+$/, async (ctx) => {
 	return ctx.answerInlineQuery(results);
 });
 
-bot.catch(console.error);
-
 export { bot };
