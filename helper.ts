@@ -38,7 +38,7 @@ function format({
 	examples: string[];
 }) {
 	return (
-		`<b>${escape(word)}</b> (${escape(partOfSpeech)})` +
+		`<b>${escape(word)}</b> (${escape(partOfSpeech.toLowerCase())})` +
 		"\n\n" +
 		`${escape(definition)}` +
 		"\n\n" +
