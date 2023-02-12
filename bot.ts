@@ -23,17 +23,17 @@ bot.use(responseTime);
 
 bot.inlineQuery(/^[\w\s'-]+$/, async (ctx) => {
 	const userQuery = ctx.update.inline_query.query;
-	const offsetLimit = 50;
+	const limit = 50;
 	const offset = ctx.update.inline_query.offset.trim()
 		? ctx.update.inline_query.offset.split(",")
 		: [];
 	const [start, end] = offset.length
 		? [Number(offset[0]), Number(offset[1])]
-		: [0, offsetLimit];
+		: [0, limit];
 	const results = await pipeline(userQuery);
 	return ctx.answerInlineQuery(results.slice(start, end), {
 		cache_time: 2592000 /*30_DAYS*/,
-		next_offset: `${end},${end + offsetLimit}`,
+		next_offset: `${end},${end + limit}`,
 	});
 });
 
