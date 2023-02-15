@@ -32,6 +32,7 @@ function escape(text: string) {
 
 const outliers = [
 	"Alternative letter-case form of ",
+	"Misspelling of ",
 	"Alternative form of ",
 	"Alternative spelling of ",
 	"plural of ",
@@ -75,7 +76,11 @@ async function recursiveFetch(list: List[]) {
 function filter(list: List[]) {
 	const unique = new Set<string>();
 	return list.flat().filter((word) => {
-		if (word.definition.startsWith(outliers[0])) return false;
+		if (
+			word.definition.startsWith(outliers[0]) ||
+			word.definition.startsWith(outliers[1])
+		)
+			return false;
 		const def = word.definition.toLowerCase();
 		if (!def.trim()) return false;
 		if (unique.has(word.definition.toLowerCase())) return false;
