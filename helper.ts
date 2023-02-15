@@ -53,8 +53,8 @@ async function api(word: string, language: "en" = "en"): Promise<List[]> {
 	return words;
 }
 
-async function recursiveFetchAndFilter(list: List[]) {
-	const newList = await Promise.all(
+async function recursiveFetch(list: List[]) {
+	const words = await Promise.all(
 		list.map(async (ele) => {
 			if (outliers.some((outlier) => ele.definition.startsWith(outlier))) {
 				const word = ele.definition
@@ -64,15 +64,18 @@ async function recursiveFetchAndFilter(list: List[]) {
 					?.toString();
 				if (!word || typeof word !== "string") return [];
 				const relatedWords = await api(word);
-				if (!ele.definition.startsWith(outliers[0]))
-					return [ele, ...relatedWords];
 				return relatedWords;
 			}
 			return ele;
 		})
 	);
+	return words.flat();
+}
+
+function filter(list: List[]) {
 	const unique = new Set<string>();
-	return newList.flat().filter((word) => {
+	return list.flat().filter((word) => {
+		if (word.definition.startsWith(outliers[0])) return false;
 		const def = word.definition.toLowerCase();
 		if (!def.trim()) return false;
 		if (unique.has(word.definition.toLowerCase())) return false;
@@ -119,7 +122,7 @@ export function createResults(
 				type: "article",
 				id: `${word}${widx}`,
 				title: `${word} (${def.partOfSpeech.toLowerCase()})`,
-				description: escape(def.definition),
+				description: def.definition,
 				input_message_content: {
 					message_text: format({
 						word,
@@ -157,7 +160,9 @@ export async function pipeline(word: string) {
 	if (typeof word !== "string" || word.trim() == "") return emptyResult();
 	const dictionaries = await api(word);
 	if (!dictionaries.length) return emptyResult();
-	const words = await recursiveFetchAndFilter(dictionaries);
+	const words = await recursiveFetch(dictionaries);
 	if (!words.length) return emptyResult(word);
+	const filtered = filter(words);
+	if (!filtered.length) return emptyResult(word);
 	return createResults(word, words);
 }
