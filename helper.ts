@@ -27,7 +27,10 @@ function escape(text: string) {
 		.replaceAll("&nbsp;", "")
 		.split(".\n ")
 		.map((str) => str.trim())
-		.join(".\n");
+		.join(".\n")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll("&", "&amp;");
 }
 
 const outliers = [
@@ -45,7 +48,7 @@ async function api(word: string, language: "en" = "en"): Promise<List[]> {
 	if (!dictionary?.length) return [];
 	const words = (dictionary as Dictionary[]).flatMap((dict) =>
 		dict.definitions.map((def) => ({
-			word,
+			word: escape(word),
 			partOfSpeech: escape(dict.partOfSpeech),
 			definition: escape(def.definition),
 			examples: def?.examples?.map((example) => escape(example)),
@@ -61,11 +64,11 @@ async function recursiveFetch(list: List[]) {
 				const word = ele.definition
 					.split(" ")
 					.at(-1)
-					?.match(/[\s_\-\w]+/)
+					?.match(/[\s_\-'"\w]+/)
 					?.toString();
 				if (!word || typeof word !== "string") return [];
 				const relatedWords = await api(word);
-				return relatedWords;
+				return [ele, ...relatedWords];
 			}
 			return ele;
 		})
@@ -75,15 +78,12 @@ async function recursiveFetch(list: List[]) {
 
 function filter(list: List[]) {
 	const unique = new Set<string>();
-	return list.flat().filter((word) => {
-		if (
-			word.definition.startsWith(outliers[0]) ||
-			word.definition.startsWith(outliers[1])
-		)
-			return false;
-		const def = word.definition.toLowerCase();
+	return list.filter((word) => {
+		const def = word.definition.trim();
 		if (!def.trim()) return false;
 		if (unique.has(word.definition.toLowerCase())) return false;
+		if ([outliers[0], outliers[1]].some((outlier) => def.startsWith(outlier)))
+			return false;
 		unique.add(def);
 		return true;
 	});
@@ -120,28 +120,26 @@ export function createResults(
 	word: string,
 	dictionaries: List[]
 ): InlineQueryResult[] {
-	return dictionaries
-		.filter((def) => Boolean(escape(def.definition).trim()))
-		.map((def, widx) => {
-			return {
-				type: "article",
-				id: `${word}${widx}`,
-				title: `${word} (${def.partOfSpeech.toLowerCase()})`,
-				description: def.definition,
-				input_message_content: {
-					message_text: format({
-						word,
-						definition: def.definition,
-						examples: def.examples?.length ? def.examples.slice(0, 10) : [],
-						partOfSpeech: def.partOfSpeech,
-					}).slice(0, 4096),
-					parse_mode: "HTML",
-				},
-				reply_markup: new InlineKeyboard()
-					.row()
-					.switchInlineCurrent("Other definitions", word),
-			};
-		});
+	return dictionaries.map((def, widx) => {
+		return {
+			type: "article",
+			id: `${def.word}${widx}`,
+			title: `${def.word} (${def.partOfSpeech.toLowerCase()})`,
+			description: def.definition,
+			input_message_content: {
+				message_text: format({
+					word,
+					definition: def.definition,
+					examples: def.examples?.length ? def.examples.slice(0, 10) : [],
+					partOfSpeech: def.partOfSpeech,
+				}).slice(0, 4096),
+				parse_mode: "HTML",
+			},
+			reply_markup: new InlineKeyboard()
+				.row()
+				.switchInlineCurrent("Other definitions", word),
+		};
+	});
 }
 
 function emptyResult(word = ""): InlineQueryResult[] {
@@ -169,5 +167,5 @@ export async function pipeline(word: string) {
 	if (!words.length) return emptyResult(word);
 	const filtered = filter(words);
 	if (!filtered.length) return emptyResult(word);
-	return createResults(word, words);
+	return createResults(word, filtered);
 }
