@@ -12,6 +12,13 @@ interface Definition {
 	examples?: string[];
 }
 
+interface List {
+	word: string;
+	partOfSpeech: string;
+	definition: string;
+	examples?: string[];
+}
+
 export const API_URL = "https://en.wiktionary.org/api/rest_v1/page/definition";
 
 function escape(text: string) {
@@ -23,12 +30,55 @@ function escape(text: string) {
 		.join(".\n");
 }
 
-async function api(word: string, language: "en" = "en") {
+const outliers = [
+	"Alternative letter-case form of ",
+	"Alternative form of ",
+	"Alternative spelling of ",
+	"plural of ",
+] as const;
+
+async function api(word: string, language: "en" = "en"): Promise<List[]> {
 	const dictionary = await fetch(`${API_URL}/${word}`)
 		.then((res) => res.json())
 		.then((res) => res?.[language]);
 	if (!dictionary?.length) return [];
-	return dictionary as Dictionary[];
+	const words = (dictionary as Dictionary[]).flatMap((dict) =>
+		dict.definitions.map((def) => ({
+			word,
+			partOfSpeech: escape(dict.partOfSpeech),
+			definition: escape(def.definition),
+			examples: def?.examples?.map((example) => escape(example)),
+		}))
+	);
+	return words;
+}
+
+async function recursiveFetchAndFilter(list: List[]) {
+	const newList = await Promise.all(
+		list.map(async (ele) => {
+			if (outliers.some((outlier) => ele.definition.startsWith(outlier))) {
+				const word = ele.definition
+					.split(" ")
+					.at(-1)
+					?.match(/[\s_\-\w]+/)
+					?.toString();
+				if (!word || typeof word !== "string") return [];
+				const relatedWords = await api(word);
+				if (!ele.definition.startsWith(outliers[0]))
+					return [ele, ...relatedWords];
+				return relatedWords;
+			}
+			return ele;
+		})
+	);
+	const unique = new Set<string>();
+	return newList.flat().filter((word) => {
+		const def = word.definition.toLowerCase();
+		if (!def.trim()) return false;
+		if (unique.has(word.definition.toLowerCase())) return false;
+		unique.add(def);
+		return true;
+	});
 }
 
 function format({
@@ -43,15 +93,15 @@ function format({
 	examples: string[];
 }) {
 	return (
-		`<b>${escape(word)}</b> (${escape(partOfSpeech.toLowerCase())})` +
+		`<b>${word}</b> (${partOfSpeech.toLowerCase()})` +
 		"\n\n" +
-		`${escape(definition)}` +
+		`${definition}` +
 		"\n\n" +
 		`${
 			examples.length
 				? `Examples: \n${examples
 						.slice(0, 10)
-						.map((eg) => `- <i>${escape(eg.trim())}</i>`)
+						.map((eg) => `- <i>${eg.trim()}</i>`)
 						.join("\n")}`
 				: ""
 		}`
@@ -60,32 +110,30 @@ function format({
 
 export function createResults(
 	word: string,
-	dictionaries: Dictionary[]
+	dictionaries: List[]
 ): InlineQueryResult[] {
-	return dictionaries.flatMap((dictionary, didx) => {
-		return dictionary.definitions
-			.filter((def) => Boolean(escape(def.definition).trim()))
-			.map((def, widx) => {
-				return {
-					type: "article",
-					id: `${word}${didx}${widx}`,
-					title: `${word} (${dictionary.partOfSpeech.toLowerCase()})`,
-					description: escape(def.definition),
-					input_message_content: {
-						message_text: format({
-							word,
-							definition: def.definition,
-							examples: def.examples?.length ? def.examples.slice(0, 10) : [],
-							partOfSpeech: dictionary.partOfSpeech,
-						}).slice(0, 4096),
-						parse_mode: "HTML",
-					},
-					reply_markup: new InlineKeyboard()
-						.row()
-						.switchInlineCurrent("Other definitions", word),
-				};
-			});
-	});
+	return dictionaries
+		.filter((def) => Boolean(escape(def.definition).trim()))
+		.map((def, widx) => {
+			return {
+				type: "article",
+				id: `${word}${widx}`,
+				title: `${word} (${def.partOfSpeech.toLowerCase()})`,
+				description: escape(def.definition),
+				input_message_content: {
+					message_text: format({
+						word,
+						definition: def.definition,
+						examples: def.examples?.length ? def.examples.slice(0, 10) : [],
+						partOfSpeech: def.partOfSpeech,
+					}).slice(0, 4096),
+					parse_mode: "HTML",
+				},
+				reply_markup: new InlineKeyboard()
+					.row()
+					.switchInlineCurrent("Other definitions", word),
+			};
+		});
 }
 
 function emptyResult(word = ""): InlineQueryResult[] {
@@ -108,6 +156,8 @@ function emptyResult(word = ""): InlineQueryResult[] {
 export async function pipeline(word: string) {
 	if (typeof word !== "string" || word.trim() == "") return emptyResult();
 	const dictionaries = await api(word);
-	if (!dictionaries.length) return emptyResult(word);
-	return createResults(word, dictionaries);
+	if (!dictionaries.length) return emptyResult();
+	const words = await recursiveFetchAndFilter(dictionaries);
+	if (!words.length) return emptyResult(word);
+	return createResults(word, words);
 }
