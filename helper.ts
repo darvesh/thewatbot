@@ -39,6 +39,7 @@ const outliers = [
 	"Alternative form of ",
 	"Alternative spelling of ",
 	"plural of ",
+	"Obsolete form of "
 ] as const;
 
 async function api(word: string, language: "en" = "en"): Promise<List[]> {
