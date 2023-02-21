@@ -143,7 +143,7 @@ export function createResults(
 	});
 }
 
-function emptyResult(word = ""): InlineQueryResult[] {
+function emptyResult(word): InlineQueryResult[] {
 	return [
 		{
 			type: "article",
@@ -163,7 +163,7 @@ function emptyResult(word = ""): InlineQueryResult[] {
 export async function pipeline(word: string) {
 	if (typeof word !== "string" || word.trim() == "") return emptyResult();
 	const dictionaries = await api(word);
-	if (!dictionaries.length) return emptyResult();
+	if (!dictionaries.length) return emptyResult(word);
 	const words = await recursiveFetch(dictionaries);
 	if (!words.length) return emptyResult(word);
 	const filtered = filter(words);
