@@ -154,7 +154,7 @@ function emptyResult(word): InlineQueryResult[] {
 			id: "thewatbotnotfoundtheword",
 			title: `No result found`,
 			input_message_content: {
-				message_text: `No definitions found for ${word.toLowerCase()}`,
+				message_text: `No definitions found for "<i>${word.toLowerCase()}</i>”`,
 				parse_mode: "HTML",
 			},
 			reply_markup: new InlineKeyboard()
