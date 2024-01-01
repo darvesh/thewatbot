@@ -45,6 +45,7 @@ const outliers = [
 	"simple past tense of ",
 	"past participle of ",
 	"present participle and gerund of ",
+	"simple past and past participle of ",
 ] as const;
 
 async function api(word: string, language: "en" = "en"): Promise<List[]> {
