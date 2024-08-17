@@ -75,7 +75,7 @@ async function api(word: string): Promise<List[]> {
 	const words = (dictionary as Dictionary[]).flatMap((dict) =>
 		dict.definitions.map((def) => ({
 			word: escape(word),
-			language: dict.language,
+			language: escape(dict.language),
 			partOfSpeech: escape(dict.partOfSpeech),
 			definition: escape(def.definition),
 			examples: def?.examples?.map((example) => escape(example)),
@@ -118,17 +118,20 @@ function filter(list: List[]) {
 
 function format({
 	word,
+	language,
 	partOfSpeech,
 	definition,
 	examples,
 }: {
 	word: string;
+	language: string;
 	partOfSpeech: string;
 	definition: string;
 	examples: string[];
 }) {
 	return (
 		`<b>${word}</b> (${partOfSpeech.toLowerCase()})` +
+		`\n[${language}]`+
 		"\n\n" +
 		`${definition}` +
 		"\n\n" +
@@ -156,6 +159,7 @@ export function createResults(
 			input_message_content: {
 				message_text: format({
 					word,
+					language: def.language,
 					definition: def.definition,
 					examples: def.examples?.length ? def.examples.slice(0, 10) : [],
 					partOfSpeech: def.partOfSpeech,
