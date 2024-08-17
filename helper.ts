@@ -14,6 +14,7 @@ interface Definition {
 
 interface List {
 	word: string;
+	language: string;
 	partOfSpeech: string;
 	definition: string;
 	examples?: string[];
@@ -48,14 +49,32 @@ const outliers = [
 	"simple past and past participle of ",
 ] as const;
 
-async function api(word: string, language: "en" = "en"): Promise<List[]> {
+const languageCodes = ["en", "ml", "ta", "mr", "ja", "hi", "sa"];
+
+async function api(word: string): Promise<List[]> {
+	const f = performance.now();
 	const dictionary = await fetch(`${API_URL}/${word}`)
 		.then((res) => res.json())
-		.then((res) => res?.[language]);
+		.then((res) => {
+			console.log(`API fetch time: ${performance.now() - f} ms`);
+			if (!res) return [];
+			const mainLanguages: Dictionary[] = [];
+			const otherLanguages: Dictionary[] = [];
+			for (const [key, value] of Object.entries(res)) {
+				if (languageCodes.includes(key)) {
+					mainLanguages.push(value as Dictionary);
+				} else {
+					otherLanguages.push(value as Dictionary);
+				}
+			}
+			return mainLanguages.concat(otherLanguages).flat();
+		})
+		.catch(() => []);
 	if (!dictionary?.length) return [];
 	const words = (dictionary as Dictionary[]).flatMap((dict) =>
 		dict.definitions.map((def) => ({
 			word: escape(word),
+			language: dict.language,
 			partOfSpeech: escape(dict.partOfSpeech),
 			definition: escape(def.definition),
 			examples: def?.examples?.map((example) => escape(example)),
@@ -131,7 +150,7 @@ export function createResults(
 		return {
 			type: "article",
 			id: `${def.word}${widx}`,
-			title: `${def.word} (${def.partOfSpeech.toLowerCase()})`,
+			title: `${def.language}: ${def.word} (${def.partOfSpeech.toLowerCase()})`,
 			description: def.definition,
 			input_message_content: {
 				message_text: format({
@@ -149,7 +168,7 @@ export function createResults(
 	});
 }
 
-function emptyResult(word): InlineQueryResult[] {
+function emptyResult(word: string): InlineQueryResult[] {
 	return [
 		{
 			type: "article",
@@ -167,7 +186,7 @@ function emptyResult(word): InlineQueryResult[] {
 }
 
 export async function pipeline(word: string) {
-	if (typeof word !== "string" || word.trim() == "") return emptyResult();
+	if (typeof word !== "string" || word.trim() == "") return emptyResult(word);
 	const dictionaries = await api(word);
 	if (!dictionaries.length) return emptyResult(word);
 	const words = await recursiveFetch(dictionaries);

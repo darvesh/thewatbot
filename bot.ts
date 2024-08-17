@@ -21,7 +21,7 @@ async function responseTime(ctx: Context, next: NextFunction): Promise<void> {
 
 bot.use(responseTime);
 
-bot.inlineQuery(/^[\w\s'-]+$/, async (ctx) => {
+bot.on("inline_query", async (ctx) => {
 	const userQuery = ctx.update.inline_query.query;
 	const limit = 50;
 	const offset = ctx.update.inline_query.offset.trim()
