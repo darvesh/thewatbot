@@ -47,6 +47,7 @@ const outliers = [
 	"past participle of ",
 	"present participle and gerund of ",
 	"simple past and past participle of ",
+	"imperative of ",
 ] as const;
 
 const languageCodes = ["en", "ml", "ta", "mr", "ja", "hi", "sa"];
