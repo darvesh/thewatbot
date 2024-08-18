@@ -13,4 +13,3 @@
 export BOT_TOKEN=""
 deno run --allow-net --allow-env ./dev.ts
 ```
-

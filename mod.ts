@@ -7,15 +7,15 @@ const handleUpdate = webhookCallback(bot, "std/http");
 const SECRET = Deno.env.get("SECRET");
 
 serve(async (req) => {
-	if (req.method === "POST") {
-		const url = new URL(req.url);
-		if (url.pathname.slice(1) === SECRET) {
-			try {
-				return await handleUpdate(req);
-			} catch (err) {
-				console.error(err);
-			}
-		}
-	}
-	return new Response("TheWatBot is up and running!");
+  if (req.method === "POST") {
+    const url = new URL(req.url);
+    if (url.pathname.slice(1) === SECRET) {
+      try {
+        return await handleUpdate(req);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+  return new Response("TheWatBot is up and running!");
 });
