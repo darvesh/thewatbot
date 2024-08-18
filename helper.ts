@@ -58,7 +58,7 @@ async function api(word: string): Promise<List[]> {
 		.then((res) => res.json())
 		.then((res) => {
 			console.log(`API fetch time: ${performance.now() - f} ms`);
-			if (!res) return [];
+			if (!res || ("title" in res && res.title == "Not found.")) return [];
 			const mainLanguages: Dictionary[] = [];
 			const otherLanguages: Dictionary[] = [];
 			for (const [key, value] of Object.entries(res)) {
