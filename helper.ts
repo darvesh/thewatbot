@@ -1,5 +1,5 @@
-import { InlineKeyboard } from "https://deno.land/x/grammy@v1.14.1/mod.ts";
-import { InlineQueryResult } from "https://deno.land/x/grammy@v1.14.1/types.ts";
+import { InlineKeyboard } from "https://deno.land/x/grammy@v1.38.2/mod.ts";
+import { InlineQueryResult } from "https://deno.land/x/grammy@v1.38.2/types.ts";
 
 interface Dictionary {
   partOfSpeech: string;
