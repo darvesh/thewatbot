@@ -2,7 +2,7 @@ import {
   Bot,
   Context,
   NextFunction,
-} from "https://deno.land/x/grammy@v1.14.1/mod.ts";
+} from "https://deno.land/x/grammy@v1.38.2/mod.ts";
 import { pipeline } from "./helper.ts";
 
 const BOT_TOKEN = Deno.env.get("BOT_TOKEN");
