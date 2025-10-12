@@ -54,23 +54,33 @@ const languageCodes = ["en", "ml", "ta", "mr", "ja", "hi", "sa"];
 
 async function api(word: string): Promise<List[]> {
   const f = performance.now();
-  const dictionary = await fetch(`${API_URL}/${word}`)
-    .then((res) => res.json())
-    .then((res) => {
-      console.log(`API fetch time: ${performance.now() - f} ms`);
-      if (!res || ("title" in res && res.title == "Not found.")) return [];
-      const mainLanguages: Dictionary[] = [];
-      const otherLanguages: Dictionary[] = [];
-      for (const [key, value] of Object.entries(res)) {
-        if (languageCodes.includes(key)) {
-          mainLanguages.push(value as Dictionary);
-        } else {
-          otherLanguages.push(value as Dictionary);
-        }
-      }
-      return mainLanguages.concat(otherLanguages).flat();
-    })
-    .catch(() => []);
+  const response = await fetch(`${API_URL}/${word}`);
+  if (response.status !== 200) {
+    console.log(
+      `Request failed with status: ${response.status}, body: ${await response
+        .text()}, word: ${word}`,
+    );
+    return [];
+  }
+  const body = await response.json().catch((error) => {
+    console.log(`Request failed with body: ${error}, word: ${word}`);
+    return null;
+  });
+  if (!body || typeof body !== "object") {
+    console.log(`Invalid response body, word: ${word}, body: ${body}`);
+    return [];
+  }
+  console.log(`API fetch time: ${performance.now() - f} ms`);
+  const mainLanguages: Dictionary[] = [];
+  const otherLanguages: Dictionary[] = [];
+  for (const [key, value] of Object.entries(body)) {
+    if (languageCodes.includes(key)) {
+      mainLanguages.push(value as Dictionary);
+    } else {
+      otherLanguages.push(value as Dictionary);
+    }
+  }
+  const dictionary = mainLanguages.concat(otherLanguages).flat();
   if (!dictionary?.length) return [];
   const words = (dictionary as Dictionary[]).flatMap((dict) =>
     dict.definitions.map((def) => ({
