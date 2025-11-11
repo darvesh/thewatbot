@@ -87,7 +87,7 @@ async function api(word: string): Promise<List[]> {
       word: escape(word),
       language: escape(dict.language),
       partOfSpeech: escape(dict.partOfSpeech),
-      definition: escape(def.definition),
+      definition: escape(def.definition.replace(".mw-parser-output .defdate{font-size:smaller}", ""),
       examples: def?.examples?.map((example) => escape(example)),
     }))
   );
