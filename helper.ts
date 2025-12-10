@@ -207,7 +207,7 @@ function emptyResult(word: string): InlineQueryResult[] {
 }
 
 export async function pipeline(word: string) {
-  if (typeof word !== "string" || word.trim() == "") return emptyResult(word);
+  if(typeof word !== "string" || word.trim() === "") return;
   const dictionaries = await api(word);
   if (!dictionaries.length) return emptyResult(word);
   const words = await recursiveFetch(dictionaries);
