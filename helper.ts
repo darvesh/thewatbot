@@ -74,6 +74,7 @@ async function api(word: string): Promise<List[]> {
   console.log(`API fetch time: ${performance.now() - f} ms`);
   const mainLanguages: Dictionary[] = [];
   const otherLanguages: Dictionary[] = [];
+  console.log(body);
   for (const [key, value] of Object.entries(body)) {
     const dictArray = Array.isArray(value) ? value : [value];
     if (languageCodes.includes(key)) {
