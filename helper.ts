@@ -173,7 +173,7 @@ export function createResults(
       description: def.definition,
       input_message_content: {
         message_text: format({
-          word,
+          word: def.word,
           language: def.language,
           definition: def.definition,
           examples: def.examples?.length ? def.examples.slice(0, 10) : [],
