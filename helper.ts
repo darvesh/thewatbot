@@ -75,13 +75,14 @@ async function api(word: string): Promise<List[]> {
   const mainLanguages: Dictionary[] = [];
   const otherLanguages: Dictionary[] = [];
   for (const [key, value] of Object.entries(body)) {
+    const dictArray = Array.isArray(value) ? value : [value];
     if (languageCodes.includes(key)) {
-      mainLanguages.push(value as Dictionary);
+      mainLanguages.push(...dictArray as Dictionary[]);
     } else {
-      otherLanguages.push(value as Dictionary);
+      otherLanguages.push(...dictArray as Dictionary[]);
     }
   }
-  const dictionary = mainLanguages.concat(otherLanguages).flat();
+  const dictionary = mainLanguages.concat(otherLanguages);
   if (!dictionary?.length) return [];
   const words = (dictionary as Dictionary[]).flatMap((dict) =>
     dict.definitions.map((def) => ({
