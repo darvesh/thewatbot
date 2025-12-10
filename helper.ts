@@ -32,7 +32,7 @@ function escape(text: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll("&", "&amp;")
-    .replace(".mw-parser-output .defdate{font-size:smaller}", "")
+    .replace(".mw-parser-output .defdate{font-size:smaller}", "");
 }
 
 const outliers = [
@@ -207,12 +207,11 @@ function emptyResult(word: string): InlineQueryResult[] {
 }
 
 export async function pipeline(word: string) {
-  if(typeof word !== "string" || word.trim() === "") return;
   const dictionaries = await api(word);
-  if (!dictionaries.length) return emptyResult(word);
+  if (!dictionaries.length) return { notFound: true, result: emptyResult(word) };
   const words = await recursiveFetch(dictionaries);
-  if (!words.length) return emptyResult(word);
+  if (!words.length) return { notFound: true, result: emptyResult(word) };
   const filtered = filter(words);
-  if (!filtered.length) return emptyResult(word);
-  return createResults(word, filtered);
+  if (!filtered.length) return { notFound: true, result: emptyResult(word) };
+  return { notFound: false, result: createResults(word, filtered) };
 }
